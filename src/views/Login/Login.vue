@@ -19,7 +19,7 @@
         </el-form-item>
         <!-- 登录按钮 -->
         <el-form-item>
-          <el-button @click.native.prevent="handleSubmit" type="primary" style="width: 100%">登录</el-button>
+          <el-button :loading="isLogin" @click.native.prevent="handleSubmit" type="primary" style="width: 100%">登录</el-button>
         </el-form-item>
         <!-- 7天自动登录和忘记密码 -->
         <el-form-item>
@@ -41,6 +41,9 @@ import LoginHeader from "./LoginHeader.vue"
       }
 })
 export default class Login extends Vue{
+
+  @Provide() isLogin: boolean = false;  //默认不显示Loading
+
   @Provide() ruleForm:{
     username: String;
     pwd: String;
@@ -60,7 +63,17 @@ export default class Login extends Vue{
   handleSubmit():void{
     (this.$refs["ruleForm"] as any).validate((valid:boolean) =>{  // 必须指定类型
       if(valid) {  // 判断校验是否通过  
-        console.log("校验通过")
+        // console.log("校验通过")
+        this.isLogin = true;  // 显示loading
+        // 校验成功，发起后端请求
+        (this as any).$axios.post("/api/users/login", this.ruleForm).then((res: any) =>{
+          this.isLogin = false;  // 请求成功后，隐藏
+          console.log(res.data);
+          // 存储token
+          localStorage.setItem("tsToken", res.data.token);
+        }).catch(() =>{
+          this.isLogin = false;  // 请求成功后，隐藏
+        })
       }
     })
   }
